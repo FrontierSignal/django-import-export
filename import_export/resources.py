@@ -27,7 +27,7 @@ from .results import Error, Result, RowResult
 from .utils import atomic_if_using_transaction
 
 try:
-    from django.db.transaction import atomic, savepoint, savepoint_rollback, savepoint_commit  # noqa
+    from django.db.transaction import atomic, get_connection, savepoint, savepoint_rollback, savepoint_commit  # noqa
 except ImportError:
     from .django_compat import atomic, savepoint, savepoint_rollback, savepoint_commit  # noqa
 
@@ -644,6 +644,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         if using_transactions:
             if dry_run or result.has_errors():
                 savepoint_rollback(sp1)
+                # FS edit: Skip running run_on_commit callbacks.
+                get_connection().run_on_commit = []
             else:
                 savepoint_commit(sp1)
 
